@@ -33,10 +33,10 @@ var (
 )
 
 type Config struct {
-	LogLevel        string `env:"QUEUE_WORKER_LOG_LEVEL" envDefault:"error"`
-	ServiceEndpoint string `env:"SERVICE_ENDPOINT" envDefault:"job-queue-worker-api.salad.com:443"`
 	MetadataURI     string `env:"SALAD_METADATA_URI" envDefault:"http://169.254.169.254:80"`
-	UseTLS          string `env:"USE_TLS" envDefault:"1"`
+	ServiceEndpoint string `env:"SALAD_QUEUE_SERVICE_ENDPOINT" envDefault:"job-queue-worker-api.salad.com:443"`
+	UseTLS          string `env:"SALAD_QUEUE_SERVICE_TLS" envDefault:"1"`
+	LogLevel        string `env:"SALAD_QUEUE_WORKER_LOG_LEVEL" envDefault:"error"`
 }
 
 type Worker struct {
