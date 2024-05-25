@@ -1,0 +1,14 @@
+version: v2
+modules:
+  - path: api/proto
+lint:
+  use:
+    - COMMENTS
+    - DEFAULT
+  rpc_allow_google_protobuf_empty_requests: true
+  rpc_allow_google_protobuf_empty_responses: true
+  disallow_comment_ignores: true
+breaking:
+  use:
+    - FILE
+  ignore_unstable_packages: true
