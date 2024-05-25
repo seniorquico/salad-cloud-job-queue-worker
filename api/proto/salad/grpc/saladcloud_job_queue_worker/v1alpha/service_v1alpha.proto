@@ -6,10 +6,13 @@ import "google/protobuf/empty.proto";
 
 // A service used by the worker to accept jobs and produce results.
 service JobQueueWorkerService {
-    // Starts a long-running stream to accept jobs. At any given time, the worker should have at most one stream open
-    // and will receive at most one job at a time. The service will wait until the worker has either completed or
-    // rejected a job before sending the next one. The worker is considered available to accept jobs as long as the
-    // stream is open.
+    // Starts a long-running stream to accept jobs. At any given time, the
+    // worker should have at most one stream open. The worker will receive at
+    // most one job at a time. The service will wait until the worker completes
+    // or rejects the job, by calling `CompleteJob` or `RejectJob`, before
+    // sending the next job. The worker is considered available to accept jobs
+    // as long as the stream is open. This may return an error with a `NotFound`
+    // status code if the currently running job no longer exists.
     rpc AcceptJobs(AcceptJobsRequest) returns (stream AcceptJobsResponse);
 
     // Completes a job.
@@ -21,7 +24,9 @@ service JobQueueWorkerService {
 
 // Represents a request to the `AcceptJobs` method.
 message AcceptJobsRequest {
-    // The ID of the currently running job. Optional.
+    // The identifier of the currently running job. Optional. This should be
+    // specified when the worker reconnects after a transient error and has not
+    // yet completed or rejected the job.
     string current_job_id = 1;
 }
 
@@ -29,18 +34,19 @@ message AcceptJobsRequest {
 message AcceptJobsResponse {
     // The stream message.
     oneof message {
-        // The heartbeat is sent to keep the stream open. The worker should ignore this message.
+        // An empty message used to health check the stream. The worker should
+        // ignore this message.
         google.protobuf.Empty heartbeat = 1;
 
-        // The next job to be processed. The worker should process this job and ultimately call either the `CompleteJob`
-        // or `RejectJob` method.
+        // The next job to be executed. The worker must call either
+        // `CompleteJob` or `RejectJob` with the result.
         Job job = 2;
     }
 }
 
 // Represents a job.
 message Job {
-    // The ID of the job.
+    // The identifier of the job.
     string job_id = 1;
 
     // The port number of the HTTP server.
@@ -55,7 +61,7 @@ message Job {
 
 // Represents a request to the `CompleteJob` method.
 message CompleteJobRequest {
-    // The ID of the job.
+    // The identifier of the job.
     string job_id = 1;
 
     // The HTTP response body.
@@ -64,6 +70,6 @@ message CompleteJobRequest {
 
 // Represents a request to the `RejectJob` method.
 message RejectJobRequest {
-    // The ID of the job.
+    // The identifier of the job.
     string job_id = 1;
 }
