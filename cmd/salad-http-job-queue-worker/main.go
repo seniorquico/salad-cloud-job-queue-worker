@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -65,6 +66,7 @@ func main() {
 func executeJob(ctx context.Context, job jobs.HTTPJob) ([]byte, error) {
 	req, err := http.NewRequestWithContext(ctx, job.RequestMethod, job.RequestURL, bytes.NewReader(job.RequestBody))
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Salad-Job-Id", job.JobId)
 	if err != nil {
 		return nil, err
 	}
@@ -74,6 +76,12 @@ func executeJob(ctx context.Context, job jobs.HTTPJob) ([]byte, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusRequestTimeout || resp.StatusCode == http.StatusTooManyRequests ||
+		(resp.StatusCode >= 500 && resp.StatusCode <= 599) {
+		_, _ = io.Copy(io.Discard, resp.Body)
+		return nil, fmt.Errorf("failed to execute job %s with status code %d", job.JobId, resp.StatusCode)
+	}
 
 	output, err := io.ReadAll(resp.Body)
 	if err != nil {
